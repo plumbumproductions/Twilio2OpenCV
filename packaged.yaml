@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Globals:
+  Function:
+    Environment:
+      Variables:
+        BucketNamePrefix:
+          Fn::Sub: ${PBucketNamePrefix}
+        ImagesBucket:
+          Fn::Sub: ${PImagesBucket}
+        ImagesTable:
+          Fn::Sub: ${PImagesTable}
+        ImagesTableStream:
+          Fn::Sub: ${PImagesTableStream}
+        OpenCVLayerARN:
+          Fn::Sub: ${POpenCVLayerARN}
+        RekogFaceCollection:
+          Fn::Sub: ${PRekogFaceCollection}
+        SSMTwilioCreds:
+          Fn::Sub: ${PSSMTwilioCreds}
+        UsersTable:
+          Fn::Sub: ${PUsersTable}
+    Runtime: python3.7
+    Timeout: 10
+Outputs:
+  TriggeredByS3Arn:
+    Description: ARN of function to be triggered by S3 uploads
+    Value:
+      Fn::GetAtt:
+      - TriggeredByS3
+      - Arn
+  TriggeredByS3Name:
+    Description: Name of function to be triggered by S3 uploads
+    Value:
+      Ref: TriggeredByS3
+Parameters:
+  PBucketNamePrefix:
+    Default: t2r2
+    Type: String
+  PImagesBucket:
+    Default: plumbum-public-west1
+    Type: String
+  PImagesTable:
+    Default: TwilioRekog2Images
+    Type: String
+  PImagesTableStream:
+    Default: arn:aws:dynamodb:us-west-1:957661260120:table/TwilioRekog2Images/stream/2019-07-27T17:25:41.128
+    Type: String
+  POpenCVLayerARN:
+    Default: arn:aws:lambda:us-west-1:957661260120:layer:opencv-4-1-0:1
+    Type: String
+  PRekogFaceCollection:
+    Default: t2r-uw1
+    Type: String
+  PSSMTwilioCreds:
+    Default: TwilioCredentials
+    Type: String
+  PUsersTable:
+    Default: TwilioRekog2Users
+    Type: String
+Resources:
+  ImgToS3:
+    Properties:
+      CodeUri: s3://plumbum-sam/d23e4871ed1b6778967c9757200ab287
+      Events:
+        Stream:
+          Properties:
+            BatchSize: 1
+            StartingPosition: TRIM_HORIZON
+            Stream:
+              Fn::Sub: ${PImagesTableStream}
+          Type: DynamoDB
+      Handler: ImgToS3.lambda_handler
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Fn::Sub: ${PImagesBucket}
+    Type: AWS::Serverless::Function
+  MsgFromTwilio:
+    Properties:
+      CodeUri: s3://plumbum-sam/930fb2b32897f93103ffa52288d22e4e
+      Events:
+        MsgFromTwilio:
+          Properties:
+            Method: POST
+            Path: /twilio/
+          Type: Api
+      Handler: MsgFromTwilio.lambda_handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Fn::Sub: ${PUsersTable}
+      - DynamoDBCrudPolicy:
+          TableName:
+            Fn::Sub: ${PImagesTable}
+    Type: AWS::Serverless::Function
+  TriggeredByS3:
+    Properties:
+      CodeUri: s3://plumbum-sam/bd7e05755b4e757dd22c9b6596c8e3de
+      Handler: TriggeredByS3.lambda_handler
+      Layers:
+      - Fn::Sub: ${POpenCVLayerARN}
+      Policies:
+      - SSMParameterReadPolicy:
+          ParameterName:
+            Fn::Sub: ${PSSMTwilioCreds}
+      - DynamoDBCrudPolicy:
+          TableName:
+            Fn::Sub: ${PUsersTable}
+      - DynamoDBCrudPolicy:
+          TableName:
+            Fn::Sub: ${PImagesTable}
+      - S3ReadPolicy:
+          BucketName:
+            Fn::Sub: ${PImagesBucket}
+      - RekognitionDetectOnlyPolicy: {}
+      - RekognitionNoDataAccessPolicy:
+          CollectionId:
+            Fn::Sub: ${PRekogFaceCollection}
+      - RekognitionReadPolicy:
+          CollectionId:
+            Fn::Sub: ${PRekogFaceCollection}
+      Timeout: 10
+    Type: AWS::Serverless::Function
+  TriggeredByS3BucketPermission:
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: TriggeredByS3
+      Principal: s3.amazonaws.com
+      SourceAccount:
+        Ref: AWS::AccountId
+      SourceArn:
+        Fn::Sub: arn:${AWS::Partition}:s3:::${PImagesBucket}
+    Type: AWS::Lambda::Permission
+Transform: AWS::Serverless-2016-10-31

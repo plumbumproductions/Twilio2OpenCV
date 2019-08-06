@@ -29,6 +29,9 @@ Parameters:
   PImagesTableStream:
     Type: String
     Default: arn:aws:dynamodb:us-west-1:957661260120:table/TwilioRekog2Images/stream/2019-07-27T17:25:41.128
+  POpenCVLayerARN:
+    Type: String
+    Default: arn:aws:lambda:us-west-1:957661260120:layer:opencv-4-1-0:1
 
 Globals:
   Function:
@@ -43,6 +46,7 @@ Globals:
         SSMTwilioCreds: !Sub ${PSSMTwilioCreds}
         RekogFaceCollection: !Sub ${PRekogFaceCollection}
         ImagesTableStream: !Sub ${PImagesTableStream}
+        OpenCVLayerARN: !Sub ${POpenCVLayerARN}
 
 Resources:
   # The lambda that is triggered by API gateway posts of SMS messages from Twilio
@@ -84,6 +88,8 @@ Resources:
     Properties:
       Handler: TriggeredByS3.lambda_handler
       Timeout: 10
+      Layers:
+          - !Sub ${POpenCVLayerARN}
       Policies:
         - SSMParameterReadPolicy:
             ParameterName: !Sub ${PSSMTwilioCreds}
