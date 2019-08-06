@@ -1,0 +1,96 @@
+#!/bin/bash
+
+set -e
+
+# Script to connect event triggers from pre-existing S3 bucket
+# containing image files to newly-created Lambda function
+
+# https://github.com/awslabs/serverless-application-model/issues/124
+# http://www.michalsakowicz.com/2018/04/07/aws-lambda-how-to-add-s3-trigger-using-command-line.html
+
+# (This might be easier to read/maintain as a python script using boto?)
+
+
+# Resource names -- update here as required
+# TODO - Get these out of stack same as we are getting func ARNs below.  No hard coding here.
+S3_BUCKET="plumbum-public-west1"
+S3_PREFIX="t2r2/"
+S3_BUCKET_ARN="arn:aws:s3:::$S3_BUCKET"
+
+# Read stack name as user input
+read -r -p 'Stack name: ' STACKNAME
+
+
+# Get Outputs JSON from stack using AWS CLI
+FUNCDESC=$(aws cloudformation describe-stacks \
+  --stack-name "$STACKNAME" \
+  --query 'Stacks[0].Outputs'
+)
+
+# Use jq ("brew install jq") to parse stack JSON and get Arn/"OutputValue" (e.g. OutputKey="Twilio2S3Arn")
+TriggeredByS3Arn=$(
+	echo $FUNCDESC |
+		jq -r --arg FUNCNAME "TriggeredByS3Arn"  '
+			.[]
+			| select(.OutputKey==$FUNCNAME) 
+			| .OutputValue'
+	)
+
+#echo $TriggeredByS3Arn
+#exit 1
+
+
+# Use AWS CLI to tell lambda to allow S3 invocation from our bucket
+aws lambda add-permission \
+  --function-name "${TriggeredByS3Arn}"  \
+  --action lambda:InvokeFunction \
+  --principal s3.amazonaws.com \
+  --source-arn "$S3_BUCKET_ARN" \
+  --statement-id "TriggeredByS3ArnPermission"
+
+
+# Prepare JSON payload for command to add S3 bucket notifications
+notification_json=$(cat <<-EOF
+	{
+		"LambdaFunctionConfigurations": [
+			{
+				"Id": "PicCreated",
+				"LambdaFunctionArn": "${TriggeredByS3Arn}",
+				"Events": [ "s3:ObjectCreated:*" ],
+				"Filter": {
+					"Key": {
+						"FilterRules": [
+							{
+								"Name": "prefix",
+								"Value": "${S3_PREFIX}"
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+EOF
+)
+#echo $notification_json
+#exit 1
+
+# Use AWS CLI to tell S3 bucket to invoke lambda on new objects
+aws s3api put-bucket-notification-configuration \
+  --bucket="$S3_BUCKET" \
+  --notification-configuration "$notification_json"
+
+
+
+# This is what the call to create DynamoDB event would look like
+#aws lambda create-event-source-mapping \
+#    --region us-east-1 \
+#    --function-name publishNewBark \
+#    --event-source streamARN  \
+#    --batch-size 1 \
+#    --starting-position TRIM_HORIZON
+
+
+
+
+

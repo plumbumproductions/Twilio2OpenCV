@@ -1,0 +1,128 @@
+{
+  "resource": "/TwilioRekog1",
+  "path": "/TwilioRekog1",
+  "httpMethod": "POST",
+  "headers": {
+    "Accept": "*/*",
+    "Cache-Control": "max-age=259200",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Host": "lll31jwwo7.execute-api.us-east-1.amazonaws.com",
+    "User-Agent": "TwilioProxy/1.1",
+    "X-Amzn-Trace-Id": "Root=1-5b7b674c-03dc25443adcada860b9de10",
+    "X-Forwarded-For": "52.90.40.29",
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Proto": "https",
+    "X-Twilio-Signature": "G4VKduG8LAMdjzhUE5wjCiIFWzo="
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "78mtqk",
+    "resourcePath": "/TwilioRekog1",
+    "httpMethod": "POST",
+    "extendedRequestId": "L80T5HyAoAMF-Tw=",
+    "requestTime": "21/Aug/2018:01:13:48 +0000",
+    "path": "/default/TwilioRekog1",
+    "accountId": "957661260120",
+    "protocol": "HTTP/1.1",
+    "stage": "default",
+    "requestTimeEpoch": 1534814028197,
+    "requestId": "74f95731-a4df-11e8-8255-5758b18968a2",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "sourceIp": "52.90.40.29",
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "TwilioProxy/1.1",
+      "user": null
+    },
+    "apiId": "lll31jwwo7"
+  },
+  "body": "ToCountry=US&MediaContentType0=image%2Fjpeg&ToState=CA&SmsMessageSid=MMf5208743ed4fdd79920554f107308bc2&NumMedia=1&ToCity=&FromZip=94102&SmsSid=MMf5208743ed4fdd79920554f107308bc2&FromState=CA&SmsStatus=received&FromCity=SAN+FRANCISCO&Body=Hello+Rick%21&FromCountry=US&To=%2B14154230532&ToZip=&NumSegments=1&MessageSid=MMf5208743ed4fdd79920554f107308bc2&AccountSid=AC0d065de57bff41c25e6dc587009dc5e9&From=%2B14153507954&MediaUrl0=https%3A%2F%2Fapi.twilio.com%2F2010-04-01%2FAccounts%2FAC0d065de57bff41c25e6dc587009dc5e9%2FMessages%2FMMf5208743ed4fdd79920554f107308bc2%2FMedia%2FMEd0418f1b39706c601f2c756efe2d3859&ApiVersion=2010-04-01",
+  "isBase64Encoded": false
+}
+
+
+
+{
+  "Records": [
+    {
+      "eventID": "225a47e0a7226724bf1d13541d766ed9",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-east-1",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1535236380,
+        "Keys": {
+          "ImgID": {
+            "S": "875366f3-1407-4712-a1fd-a857b3c33a3d"
+          }
+        },
+        "NewImage": {
+          "ImgID": {
+            "S": "875366f3-1407-4712-a1fd-a857b3c33a3d"
+          },
+          "user": {
+            "S": "+14153507954"
+          },
+          "url": {
+            "S": "https://api.twilio.com/2010-04-01/Accounts/AC0d065de57bff41c25e6dc587009dc5e9/Messages/MM43858e2bf742f0d064ea6eb2d356fe27/Media/ME57811a808157dae5db8511bc17409901"
+          }
+        },
+        "SequenceNumber": "116700000000021503208173",
+        "SizeBytes": 263,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:957661260120:table/TwilioRekog1Images/stream/2018-08-25T22:29:15.059"
+    }
+  ]
+}
+
+
+
+
+{
+  "Records": [
+    {
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
+      "awsRegion": "us-east-1",
+      "eventTime": "2018-08-27T01:26:46.953Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": {
+        "principalId": "AWS:AROAJUJD3FGLR23X2AZZW:TwilioRekog1ToS3"
+      },
+      "requestParameters": {
+        "sourceIPAddress": "52.207.217.140"
+      },
+      "responseElements": {
+        "x-amz-request-id": "2607A10FEE58D00F",
+        "x-amz-id-2": "65JmhCwhRJQ7wYbUWIjtgS6byxNkWwNLFg5XhdxmU81jRmAIzaYYBGXH237+hCD7IrTeNuylW1w="
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "c8627f8e-c514-4a0a-bcc4-90267351024a",
+        "bucket": {
+          "name": "plumbum-dev",
+          "ownerIdentity": {
+            "principalId": "A3MFZZ6NQ2GLPW"
+          },
+          "arn": "arn:aws:s3:::plumbum-dev"
+        },
+        "object": {
+          "key": "Twilio2Lambda2/81956b6e-8c2e-402b-a022-8db99c92251d.jpg",
+          "size": 696849,
+          "eTag": "fe8c67829190ab8e89ee252a2b1fc1e8",
+          "sequencer": "005B835356C8EFA35A"
+        }
+      }
+    }
+  ]
+}

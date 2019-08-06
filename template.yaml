@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+# After SAM we have to run opt/event_triggers bash script to create notification ("s3:ObjectCreated:*")
+# from S3 bucket to lambda that processes new uploads ("TriggeredByS3")
+
+# There are strings hard coded into this template that would be better as parameters all in one place
+# https://www.reddit.com/r/aws/comments/984v8x/simple_question_how_to_define_a_custom_variable/
+
+Parameters:
+  PUsersTable:
+    Type: String
+    Default: TwilioRekog2Users
+  PImagesTable:
+    Type: String
+    Default: TwilioRekog2Images
+  PImagesBucket:
+    Type: String
+    Default: plumbum-public-west1
+  PBucketNamePrefix:
+    Type: String
+    Default: t2r2
+  PSSMTwilioCreds:
+    Type: String
+    Default: TwilioCredentials
+  PRekogFaceCollection:
+    Type: String
+    Default: t2r-uw1
+  PImagesTableStream:
+    Type: String
+    Default: arn:aws:dynamodb:us-west-1:957661260120:table/TwilioRekog2Images/stream/2019-07-27T17:25:41.128
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.7
+    Environment:
+      Variables:
+        UsersTable: !Sub ${PUsersTable}
+        ImagesTable: !Sub ${PImagesTable}
+        ImagesBucket: !Sub ${PImagesBucket}
+        BucketNamePrefix: !Sub ${PBucketNamePrefix}
+        SSMTwilioCreds: !Sub ${PSSMTwilioCreds}
+        RekogFaceCollection: !Sub ${PRekogFaceCollection}
+        ImagesTableStream: !Sub ${PImagesTableStream}
+
+Resources:
+  # The lambda that is triggered by API gateway posts of SMS messages from Twilio
+  MsgFromTwilio:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: MsgFromTwilio.lambda_handler
+      Events:
+        MsgFromTwilio:
+          Type: Api
+          Properties:
+            Path: /twilio/
+            Method: POST
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${PUsersTable}
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${PImagesTable}
+
+  # The lambda that copies images from Twilio to S3 in response to new records being created in db by MsgFromTwilio
+  ImgToS3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: ImgToS3.lambda_handler
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Sub ${PImagesBucket}
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !Sub ${PImagesTableStream}
+            BatchSize: 1
+            StartingPosition: TRIM_HORIZON
+
+  # The lambda that is triggered when a new image is uploaded to S3
+  TriggeredByS3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: TriggeredByS3.lambda_handler
+      Timeout: 10
+      Policies:
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub ${PSSMTwilioCreds}
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${PUsersTable}
+        - DynamoDBCrudPolicy:
+            TableName: !Sub ${PImagesTable}
+        - S3ReadPolicy:
+            BucketName: !Sub ${PImagesBucket}
+        - RekognitionDetectOnlyPolicy: {}
+        - RekognitionNoDataAccessPolicy:
+            CollectionId: !Sub ${PRekogFaceCollection}
+        - RekognitionReadPolicy:
+            CollectionId: !Sub ${PRekogFaceCollection}
+
+  # Permissions added to to the TriggeredByS3 lambda so the s3 bucket is allowed send it notifications
+  TriggeredByS3BucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref TriggeredByS3
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub "arn:${AWS::Partition}:s3:::${PImagesBucket}"
+
+Outputs:
+  # This is so we can get the ARN of the newly created TriggeredByS3 lambda in CLI for use in the opt/event_triggers script
+  TriggeredByS3Arn:
+    Description: ARN of function to be triggered by S3 uploads
+    Value: !GetAtt TriggeredByS3.Arn
+
+  # This is so we can get the Name of the newly created TriggeredByS3 lambda in CLI for use in the opt/event_triggers script
+  TriggeredByS3Name:
+    Description: Name of function to be triggered by S3 uploads
+    Value: !Ref TriggeredByS3
+
