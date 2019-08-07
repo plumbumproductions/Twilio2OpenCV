@@ -60,7 +60,7 @@ Parameters:
 Resources:
   ImgToS3:
     Properties:
-      CodeUri: s3://plumbum-sam/d23e4871ed1b6778967c9757200ab287
+      CodeUri: s3://plumbum-sam/3e1932ac1a382277530ce2b26cec6a6c
       Events:
         Stream:
           Properties:
@@ -77,7 +77,7 @@ Resources:
     Type: AWS::Serverless::Function
   MsgFromTwilio:
     Properties:
-      CodeUri: s3://plumbum-sam/930fb2b32897f93103ffa52288d22e4e
+      CodeUri: s3://plumbum-sam/8c6a2c499cb69d805f33dc725d4244fc
       Events:
         MsgFromTwilio:
           Properties:
@@ -95,7 +95,7 @@ Resources:
     Type: AWS::Serverless::Function
   TriggeredByS3:
     Properties:
-      CodeUri: s3://plumbum-sam/bd7e05755b4e757dd22c9b6596c8e3de
+      CodeUri: s3://plumbum-sam/9f5d3ed120e3d46da139a21a654c8295
       Handler: TriggeredByS3.lambda_handler
       Layers:
       - Fn::Sub: ${POpenCVLayerARN}

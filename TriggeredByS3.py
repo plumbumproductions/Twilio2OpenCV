@@ -3,8 +3,9 @@ import json
 import urllib
 import os
 from twilio.rest import Client
+import cv2
 
-print("Cold Start")
+print("Cold Start w/CV2")
 
 
 TABLE_USERS = os.environ['UsersTable']
@@ -28,6 +29,10 @@ twAuthToken = twCredentials["twAuthToken"]
 # --------------- Main handler ------------------
 
 def lambda_handler(event, context):
+
+    ocvversion=cv2.__version__
+    print("OpenCV Version:")
+    print(ocvversion)
 
     # print('Event: %s' % json.dumps(event))
     

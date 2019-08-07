@@ -16,3 +16,10 @@
 
 - "Additionally I’m passing Twilio’s X-Twilio-Signature HTTP header through as “event.Signature” so you can properly validate the request as being from Twilio for full security."
 	- http://dustinbolton.com/process-twilio-sms-text-message-in-nodejs-in-aws-lambda-function-via-api-gateway/
+
+Access Patterns
+- Images by user, sorted by date desc
+- Images by user and group
+- Images by group
+- Images by match
+- Target images by group
